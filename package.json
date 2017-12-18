@@ -2,7 +2,7 @@
   "name": "hamiltonian",
   "version": "0.0.0",
   "description": "A TISE solver",
-  "homepage": "https://github.com/arkajitmandal/solveTISE",
+  "homepage": "https://github.com/arkajitmandal/hamiltonian",
   "author": {
     "name": "Arkajit Mandal",
     "email": "arkajitmandal@gmail.com",
@@ -67,7 +67,9 @@
   },
   "repository": "arkajitmandal/hamiltonian",
   "jest": {
-    "testEnvironment": "node"
+    "testEnvironment": "node",
+    "collectCoverage":true,
+    "collectCoverageFrom":["lib/**/*.{js,jsx}","!**/node_modules/**"]
   },
   "license": "Apache-2.0"
 }
