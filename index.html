@@ -1,0 +1,32 @@
+<html>
+
+<head>
+    <script src="math.js" type="text/javascript"></script>
+    <script src="numeric.js"></script>
+    <script src="lib/index.js"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+
+<body>
+    <div id="plot"></div>
+    
+<script>
+function plotBasis(Basis, N = 100, up = 1, down = -1){
+    data = [];
+    for (var i = 0; i< Basis.set.length; i++ ){
+        x = [];
+        y = [];
+        for (var n = 0; n< N; n++ ){
+            thisX = down + (up - down) * n / N;
+            thisY = Basis.set[i].at(thisX);
+            x.push(thisX);
+            y.push(thisY);
+        }
+        data.push({ x: x, y: y});
+    }
+    Plotly.newPlot('plot', data); 
+}            
+</script>
+</body>
+
+</html>
