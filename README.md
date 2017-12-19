@@ -7,4 +7,4 @@ A TISE solver
 
 It's as simple as that!
 
-![powered by]('http://numericjs.com/resources/paperplane-small.png')
+<img src='http://numericjs.com/resources/paperplane-small.png' />
