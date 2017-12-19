@@ -8,8 +8,15 @@
 </head>
 
 <body>
-    <div id="plot"></div>
-    
+    <select id= 'basis'>
+            <option value="Legendre">Legendre Polynomial</option>
+            <option value="custom">Custom Basis</option>
+    </select>
+    <input id = 'basisSize' value = '3'>
+    <input id = 'fx' value = 'x^2'>
+    <button>Solve</button>
+    <div id="plot" width="50%"></div>
+    <div id="plotE" width="50%"></div>
 <script>
 function plotBasis(Basis, N = 100, up = 1, down = -1){
     data = [];
@@ -22,10 +29,36 @@ function plotBasis(Basis, N = 100, up = 1, down = -1){
             x.push(thisX);
             y.push(thisY);
         }
-        data.push({ x: x, y: y});
+        data.push({ x: x, y: y, name: '|' + i.toString() + '>'});
     }
     Plotly.newPlot('plot', data); 
-}            
+}     
+function plotEigenvalue(E, up = 1, down = -1){
+    data = [];
+    for (var i = 0; i< E.length; i++ ){
+        let N = 2;
+        x = [];
+        y = [];
+        for (var n = 0; n< N; n++ ){
+            thisX = down + (up - down) * n / N;
+            thisY = E[i];
+            x.push(thisX);
+            y.push(thisY);
+        }
+        data.push({ x: x, y: y, name: 'E <sub>'+ i.toString() + '</sub>'});
+    }
+    Plotly.newPlot('plotE', data); 
+}       
+
+
+async function start(){
+    var basis = document.getElementById('basis').value;
+    
+}
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
 </script>
 </body>
 
