@@ -8,3 +8,4 @@ A TISE solver
 It's as simple as that!
 
 <img src='http://numericjs.com/resources/paperplane-small.png' width='70px' />
+<img src='http://mathjs.org/css/img/mathjs_330x100.png' width='70px' />
