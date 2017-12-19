@@ -1,6 +1,18 @@
 <html>
 
 <head>
+    <style>
+#myProgress {
+    width: 100%;
+    background-color: #ddd;
+  }
+  
+  #myBar {
+    width: 1%;
+    height: 30px;
+    background-color: #4CAF50;
+  }
+</style>
     <script src="math.js" type="text/javascript"></script>
     <script src="numeric.js"></script>
     <script src="lib/index.js"></script>
@@ -8,22 +20,30 @@
 </head>
 
 <body>
+    <label for="basis"> Basis: </label>
     <select id= 'basis'>
-            <option value="Legendre">Legendre Polynomial</option>
-            <option value="custom">Custom Basis</option>
+            <option value="legendre">Legendre Polynomial</option>
+            <option value="fourier-cos">Fourier</option>
     </select>
-    <input id = 'basisSize' value = '3'>
-    <input id = 'fx' value = 'x^2'>
-    <button>Solve</button>
-    <div id="plot" width="50%"></div>
-    <div id="plotE" width="50%"></div>
+    <label for="basisN"> Number of Basis Function: </label>
+    <input id = 'basisN' value = '3'>
+    <label for="grids"> Number of Grid Points (for integration): </label>
+    <input id = 'grids' value = '50'>
+    <label for="Vx"> V(x): </label>
+    <input id = 'Vx' value = 'x^2'>
+    <button onclick="start()">Solve</button>
+    <div id="myProgress">
+            <div id="myBar"></div>
+    </div>
+    <div id="plot" style="width:800px; margin:0 auto;"></div>
+    <div id="plotE" style="width:800px; margin:0 auto;"></div>
 <script>
 function plotBasis(Basis, N = 100, up = 1, down = -1){
     data = [];
     for (var i = 0; i< Basis.set.length; i++ ){
         x = [];
         y = [];
-        for (var n = 0; n< N; n++ ){
+        for (var n = 0; n<= N; n++ ){
             thisX = down + (up - down) * n / N;
             thisY = Basis.set[i].at(thisX);
             x.push(thisX);
@@ -31,15 +51,16 @@ function plotBasis(Basis, N = 100, up = 1, down = -1){
         }
         data.push({ x: x, y: y, name: '|' + i.toString() + '>'});
     }
-    Plotly.newPlot('plot', data); 
-}     
+    Plotly.newPlot('plot', data, {title:'Eigen Functions'}); 
+}   
+  
 function plotEigenvalue(E, up = 1, down = -1){
     data = [];
     for (var i = 0; i< E.length; i++ ){
-        let N = 2;
+        let N = 3;
         x = [];
         y = [];
-        for (var n = 0; n< N; n++ ){
+        for (var n = 0; n<= N; n++ ){
             thisX = down + (up - down) * n / N;
             thisY = E[i];
             x.push(thisX);
@@ -47,18 +68,98 @@ function plotEigenvalue(E, up = 1, down = -1){
         }
         data.push({ x: x, y: y, name: 'E <sub>'+ i.toString() + '</sub>'});
     }
-    Plotly.newPlot('plotE', data); 
+    Plotly.newPlot('plotE', data, {title:'Eigen Values', xaxis: {
+    autorange: true,
+    showgrid: false,
+    zeroline: false,
+    showline: false,
+    autotick: true,
+    ticks: '',
+    showticklabels: false
+  }}); 
 }       
 
 
 async function start(){
-    var basis = document.getElementById('basis').value;
-    
+    var basisName = document.getElementById('basis').value;
+    var basisN = document.getElementById('basisN').value;
+    myBasis = commonBasis(basisName,math.eval(basisN));
+    myBasis.normalize();
+    let _ ;
+    var V;
+    let N = myBasis.set.length;
+    totalH = []
+    for (var a = 0; a < N; a++){
+        totalH.push([])
+        for (var b = 0; b < N; b++){
+            totalH[a].push(0) 
+        }
+    }
+    await sleep(100)
+    let seg = document.getElementById("grids").value;
+    let dx = (myBasis.upperLimit - myBasis.lowerLimit)/seg
+    let begin = myBasis.lowerLimit;
+    var elem = document.getElementById("myBar");   
+    var width = 1;
+    var prog = 100/seg;
+    for (var i = 0; i < seg; i++){
+        myBasis.lowerLimit = begin + i * dx;
+        myBasis.upperLimit = begin + (i + 1) * dx;
+        await sleep(100)
+        let H = hamiltonian(myBasis, _, 3);
+        width+= prog; 
+        elem.style.width = width + '%'; 
+        for (var a = 0; a < N; a++){
+            for (var b = 0; b < N; b++){
+                totalH[a][b] = totalH[a][b] + H[a][b];
+            }
+        }
+    }    
+    Vx = document.getElementById('Vx').value;
+    await sleep(1000);
+    let V3 = getV(Vx, myBasis, 30)
+    width = 1;
+    for (var i = 0; i < seg; i++){ 
+        myBasis.lowerLimit = begin + i * dx;
+        myBasis.upperLimit = begin + (i + 1) * dx;
+        await sleep(100);
+        let Vij = getV(Vx, myBasis, 3);
+        width += prog; 
+        elem.style.width = width + '%'; 
+        for (var s = 0; s < N; s++){
+            for (var q = 0; q < N; q++){
+                totalH[s][q] = totalH[s][q] + Vij[s][q];
+            }
+            
+        }
+    }    
+
+
+    let E = eigen(totalH);
+    let vec = E[1];
+    let Phi = [];
+    for (var k = 0; k < N; k++){
+        thisPhi = "0"
+        for (var l = 0; l < N; l++){
+            thisPhi = vec[k][l].toString() + "* (" + myBasis.set[l].fx + " ) +" + thisPhi;
+        }
+        Phi.push(thisPhi);
+    }
+    let Psi = []
+    for (var k = 0; k < N; k++){
+        Psi.push(new BasisFunction(Phi[k]));
+    }
+    let wfBasis =  new Basis(Psi);
+    plotBasis(wfBasis);
+    plotEigenvalue(E[0]);
 }
+
 
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
+
+
 </script>
 </body>
 
